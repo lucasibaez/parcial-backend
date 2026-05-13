@@ -1,0 +1,193 @@
+from typing import List, Annotated
+
+from fastapi import APIRouter, Depends, Query
+from sqlmodel import Session
+
+from app.db import get_session
+
+# Schemas
+from app.schemas.ingrediente import (
+    IngredienteCreate,
+    IngredienteRead,
+    IngredienteUpdate
+)
+
+
+from app.services.ingrediente import (
+    crear_ingrediente_service,
+    listar_ingredientes_service,
+    obtener_ingrediente_service,
+    actualizar_ingrediente_service,
+    eliminar_ingrediente_service,
+    restaurar_ingrediente_service
+)
+
+router = APIRouter(
+    prefix="/ingredientes",
+    tags=["Ingredientes"]
+)
+
+# =========================================================
+# CREATE
+# =========================================================
+@router.post(
+    "/",
+    response_model=IngredienteRead,
+    status_code=201
+)
+def crear_ingrediente(
+
+    # ✅ REQUEST BODY
+    data: IngredienteCreate,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return crear_ingrediente_service(
+        session=session,
+        data=data
+    )
+
+
+# =========================================================
+# GET ALL
+# =========================================================
+@router.get(
+    "/",
+    response_model=List[IngredienteRead],
+    status_code=200
+)
+def listar_ingredientes(
+
+   
+    nombre: Annotated[
+        str | None,
+        Query(description="Filtrar ingredientes por nombre")
+    ] = None,
+
+    es_alergeno: Annotated[
+        bool | None,
+        Query(description="Filtrar ingredientes alergénicos")
+    ] = None,
+
+    # 📄 PAGINACIÓN
+    offset: Annotated[
+        int,
+        Query(
+            ge=0,
+            description="Desde qué registro comenzar"
+        )
+    ] = 0,
+
+    limit: Annotated[
+        int,
+        Query(
+            ge=1,
+            le=100,
+            description="Cantidad máxima de resultados"
+        )
+    ] = 10,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return listar_ingredientes_service(
+        session=session,
+        nombre=nombre,
+        es_alergeno=es_alergeno,
+        offset=offset,
+        limit=limit
+    )
+
+
+# =========================================================
+# GET BY ID
+# =========================================================
+@router.get(
+    "/{id}",
+    response_model=IngredienteRead,
+    status_code=200
+)
+def obtener_ingrediente(
+
+    id: int,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return obtener_ingrediente_service(
+        session=session,
+        ingrediente_id=id
+    )
+
+
+# =========================================================
+# UPDATE
+# =========================================================
+@router.put(
+    "/{id}",
+    response_model=IngredienteRead,
+    status_code=200
+)
+def actualizar_ingrediente(
+
+    id: int,
+
+    
+    data: IngredienteUpdate,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return actualizar_ingrediente_service(
+        session=session,
+        ingrediente_id=id,
+        data=data
+    )
+
+
+# =========================================================
+# DELETE
+# =========================================================
+@router.delete(
+    "/{id}",
+    status_code=200
+)
+def eliminar_ingrediente(
+
+    id: int,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return eliminar_ingrediente_service(
+        session=session,
+        ingrediente_id=id
+    )
+
+
+# =========================================================
+# RESTORE
+# =========================================================
+@router.post(
+    "/{id}/restaurar",
+    response_model=IngredienteRead,
+    status_code=200
+)
+def restaurar_ingrediente(
+
+    id: int,
+
+    session: Session = Depends(get_session)
+
+):
+
+    return restaurar_ingrediente_service(
+        session=session,
+        ingrediente_id=id
+    )
